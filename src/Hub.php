@@ -79,7 +79,7 @@ class Hub extends HubAbstract {
     public function getSectionData(string $section_id): array {
         $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
         $data = $this->unpackBuffer($buffer);
-        return $this->groupDataByTime($data, (int)$section_id);
+        return $this->groupDataByTime($data, (int)$section_id, true);
     }
 
     /**
@@ -94,40 +94,23 @@ class Hub extends HubAbstract {
     ): array {
         $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
         $data = $this->unpackBuffer($buffer);
-        if (!$keep_nulls) {
-            $data = array_filter(
-                $data,
-                function ($value) {
-                    return $value !== null;
-                }
-            );
-        }
-
-        $data = $this->groupDataByTime($data, (int)$section_id);
+        $data = $this->groupDataByTime($data, (int)$section_id, $keep_nulls);
 
         if (empty($from) && $to === null) {
             return $data;
         }
 
-        $timestamp = (int)$section_id;
-        $slice_offset = 0;
-        $slice_length = self::ROWS;
-
-        if (!empty($from)) {
-            if ($from < $timestamp) {
-                $from = $timestamp;
+        foreach ($data as $timestamp => $value) {
+            if (!empty($from) && $timestamp < $from) {
+                unset($data[$timestamp]);
             }
 
-            $from_rounded = $this->roundTimestamp($from);
-            $slice_offset = ($from_rounded - $timestamp) / 60;
+            if ($to !== null && $timestamp > $to) {
+                unset($data[$timestamp]);
+            }
         }
 
-        if ($to !== null) {
-            $to_rounded = $this->roundTimestamp($to);
-            $slice_length = (($to_rounded - $timestamp) / 60) - $slice_offset;
-        }
-
-        return array_slice($data, $slice_offset, $slice_length, true);
+        return $data;
     }
 
     /**
@@ -230,12 +213,14 @@ class Hub extends HubAbstract {
         return floor($timestamp / $step) * $step;
     }
 
-    protected function groupDataByTime(array $data, int $offset): array {
+    protected function groupDataByTime(array $data, int $offset, bool $keep_nulls = false): array {
         $step = 60;
         $time = $offset;
         $grouped_data = [];
         foreach ($data as $item) {
-            $grouped_data[$time] = $item;
+            if ($keep_nulls || $item !== null)  {
+                $grouped_data[$time] = $item;
+            }
             $time += $step;
         }
 
