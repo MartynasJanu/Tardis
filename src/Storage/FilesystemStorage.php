@@ -5,6 +5,8 @@ namespace Tardis\Storage;
 use Tardis\Abstracts\StorageAbstract;
 
 class FilesystemStorage extends StorageAbstract {
+    protected $storage_dir = __DIR__.'/../../data';
+
     public function hubExists(string $hub_id): bool {
         $hub_dir = $this->getHubDirByHubId($hub_id);
 
@@ -33,7 +35,11 @@ class FilesystemStorage extends StorageAbstract {
     }
 
     public function getStorageDir(): string {
-        return __DIR__.'/../../data';
+        return $this->storage_dir;
+    }
+
+    public function setStorageDir(string $dir) {
+        $this->storage_dir = $dir;
     }
 
     public function createHubIfNotExists(string $hub_id) {
