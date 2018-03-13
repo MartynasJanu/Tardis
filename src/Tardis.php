@@ -42,6 +42,26 @@ class Tardis {
         return $this->hub;
     }
 
+    /**
+     *
+     * @param int $from UNIX timestamp
+     * @param int $to UNIX timestamp
+     */
+    public function getValues(int $from = null, int $to = null, bool $keep_nulls = false): array {
+        $hub = $this->getHub();
+        $sections = $hub->getSections($from, $to);
+
+        $values = [];
+        foreach ($sections as $section_id) {
+            $section_values = $hub->getSectionValues($section_id, $from, $to, $keep_nulls);
+            foreach ($section_values as $timestamp => $value) {
+                $values[$timestamp] = $value;
+            }
+        }
+
+        return $values;
+    }
+
     public function getInts(int $timestamp) {
         $hub = $this->getHub();
         $section_id = $hub->getHubSectionIdByTimestamp($timestamp);

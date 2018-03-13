@@ -10,4 +10,5 @@ abstract class StorageAbstract implements StorageInterface {
     abstract public function createHubIfNotExists(string $hub_id);
     abstract public function writeHubSection(string $hub_id, string $hub_section_id, string $buffer);
     abstract public function readHubSection(string $hub_id, string $hub_section_id): string;
+    abstract public function getHubSections(string $hub_id): array;
 }

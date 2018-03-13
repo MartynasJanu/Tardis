@@ -28,6 +28,23 @@ class FilesystemStorage extends StorageAbstract {
         }
     }
 
+    public function getHubSections(string $hub_id): array {
+        $hub_dir = $this->getHubDirByHubId($hub_id);
+        if ($this->isGzipEnabled()) {
+            $pattern = '[0-9]*.gzipped';
+        } else {
+            $pattern = '[0-9]*';
+        }
+
+        $files = glob($hub_dir.'/'.$pattern);
+        $sections = [];
+        foreach ($files as $file_path) {
+            $sections[] = pathinfo($file_path, PATHINFO_FILENAME);
+        }
+
+        return $sections;
+    }
+
     public function getHubDirByHubId(string $hub_id): string {
         $hub_key = substr($hub_id, 0, 1);
         $path = '%s/%s/%s';

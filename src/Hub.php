@@ -83,6 +83,89 @@ class Hub extends HubAbstract {
     }
 
     /**
+     *
+     * @todo implement streamed reading
+     */
+    public function getSectionValues(
+        string $section_id,
+        int $from = null,
+        int $to = null,
+        bool $keep_nulls = false
+    ): array {
+        $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
+        $data = $this->unpackBuffer($buffer);
+        if (!$keep_nulls) {
+            $data = array_filter(
+                $data,
+                function ($value) {
+                    return $value !== null;
+                }
+            );
+        }
+
+        $data = $this->groupDataByTime($data, (int)$section_id);
+
+        if (empty($from) && $to === null) {
+            return $data;
+        }
+
+        $timestamp = (int)$section_id;
+        $slice_offset = 0;
+        $slice_length = self::ROWS;
+
+        if (!empty($from)) {
+            if ($from < $timestamp) {
+                $from = $timestamp;
+            }
+
+            $from_rounded = $this->roundTimestamp($from);
+            $slice_offset = ($from_rounded - $timestamp) / 60;
+        }
+
+        if ($to !== null) {
+            $to_rounded = $this->roundTimestamp($to);
+            $slice_length = (($to_rounded - $timestamp) / 60) - $slice_offset;
+        }
+
+        return array_slice($data, $slice_offset, $slice_length, true);
+    }
+
+    /**
+     *
+     * @param int $from UNIX timestamp
+     * @param int $to UNIX timestamp
+     * @return array
+     */
+    public function getSections(int $from = null, int $to = null): array {
+        $all_sections = $this->storage->getHubSections($this->hub_id);
+        if (empty($from) && $to === null) {
+            return $all_sections;
+        }
+
+        $actual_sections = [];
+        foreach ($all_sections as $section) {
+            $actual = true;
+            $item_count = $this->getItemCountByTimestamp((int)$section);
+            $section_from = (int)$section;
+            $section_to = $section_from + $item_count * 60 - 1;
+
+            if (!empty($from) && $section_to < $from) {
+                $actual = false;
+            }
+
+            if ($to !== null && $section_from > $to) {
+                $actual = false;
+            }
+
+            if ($actual) {
+                $actual_sections[] = $section;
+            }
+        }
+
+        return $actual_sections;
+    }
+
+    /**
      * @todo refactor!
      */
     protected function writeToSection(string $section_id, array $data) {

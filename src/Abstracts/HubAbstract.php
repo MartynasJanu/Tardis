@@ -19,6 +19,14 @@ abstract class HubAbstract {
 
     abstract public function setInt(int $timestamp, int $value);
 
+    /**
+     *
+     * @param int $from UNIX timestamp
+     * @param int $to UNIX timestamp
+     * @return array
+     */
+    abstract public function getSections(int $from = null, int $to = null): array;
+
     public function getHubSectionIdByTimestamp(int $timestamp): string {
         $year = (int)gmdate('Y-01-01 00:00:00', $timestamp);
         return (string)gmmktime(0, 0, 0, 1, 1, $year);
