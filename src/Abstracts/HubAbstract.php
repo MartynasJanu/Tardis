@@ -23,4 +23,10 @@ abstract class HubAbstract {
         $year = (int)gmdate('Y-01-01 00:00:00', $timestamp);
         return (string)gmmktime(0, 0, 0, 1, 1, $year);
     }
+
+    public function getItemCountByTimestamp(string $section_id): int {
+        $year = (int)gmdate('Y-01-01 00:00:00', (int)$section_id);
+        $days = date("z", mktime(0, 0, 0, 12, 31, $year)) + 1;
+        return $days * 24 * 60;
+    }
 }
