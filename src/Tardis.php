@@ -25,6 +25,8 @@ class Tardis {
     public function __construct(string $hub_id, bool $delayed_save = true, StorageInterface $storage = null) {
         if ($storage === null) {
             $this->storage = new FilesystemStorage();
+        } else {
+            $this->storage = $storage;
         }
 
         $this->hub_id = $hub_id;
