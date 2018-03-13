@@ -6,6 +6,7 @@ use Tardis\Abstracts\StorageAbstract;
 
 class FilesystemStorage extends StorageAbstract {
     protected $storage_dir = __DIR__.'/../../data';
+    protected $gzip_enabled = true;
 
     public function hubExists(string $hub_id): bool {
         $hub_dir = $this->getHubDirByHubId($hub_id);
@@ -56,14 +57,36 @@ class FilesystemStorage extends StorageAbstract {
     public function writeHubSection(string $hub_id, string $hub_section_id, string $buffer) {
         $hub_dir = $this->getHubDirByHubId($hub_id);
         $hub_section_path = $hub_dir.'/'.$hub_section_id;
-        file_put_contents($hub_section_path, $buffer);
-        file_put_contents($hub_section_path.'.gzipped', gzcompress(file_get_contents($hub_section_path, 6)));
+        $hub_section_path_gzipped = $hub_section_path.'.gzipped';
+
+        if ($this->isGzipEnabled()) {
+            file_put_contents($hub_section_path_gzipped, gzcompress($buffer));
+        } else {
+            file_put_contents($hub_section_path, $buffer);
+        }
     }
 
     public function readHubSection(string $hub_id, string $hub_section_id): string {
         $hub_dir = $this->getHubDirByHubId($hub_id);
         $hub_section_path = $hub_dir.'/'.$hub_section_id;
+        $hub_section_path_gzipped = $hub_section_path.'.gzipped';
 
-        return file_get_contents($hub_section_path);
+        if ($this->isGzipEnabled() && file_exists($hub_section_path_gzipped)) {
+            return gzuncompress(file_get_contents($hub_section_path_gzipped));
+        } else {
+            return file_get_contents($hub_section_path);
+        }
+    }
+
+    public function isGzipEnabled(): bool {
+        return $this->gzip_enabled;
+    }
+
+    public function enableGzip() {
+        $this->gzip_enabled = true;
+    }
+
+    public function disableGzip() {
+        $this->gzip_enabled = false;
     }
 }
