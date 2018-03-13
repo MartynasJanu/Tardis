@@ -89,5 +89,7 @@ class Tardis {
         foreach ($this->set_instructions as $section_id => $instructions) {
             $hub->setFromInstructions($section_id, $instructions);
         }
+
+        $this->set_instructions = [];
     }
 }
