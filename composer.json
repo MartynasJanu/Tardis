@@ -1,0 +1,8 @@
+{
+    "name": "MartynasJanu/Tardis",
+    "autoload": {
+        "psr-4": {
+            "Tardis\\": "src/"
+        }
+    }
+}
