@@ -5,7 +5,7 @@ namespace Tardis;
 use Tardis\Abstracts\HubAbstract;
 
 class Hub extends HubAbstract {
-    const ROWS = 365 * 24 * 60;
+    const ROWS = 366 * 24 * 60;
 
     const TYPE_NULL = 'x';
     const TYPE_INT_SHORT = 's';
