@@ -8,6 +8,7 @@ class TestStorage extends StorageAbstract {
     public $hubSectionExistsReturn = false;
     public $writeHubSectionSet = null;
     public $hubSectionBuffer = null;
+    public $hubSections = [];
 
     public function hubExists(string $hub_id): bool {
         die('hubExists');
@@ -18,7 +19,7 @@ class TestStorage extends StorageAbstract {
     }
 
     public function getHubSections(string $hub_id): array {
-        die('getHubSections');
+        return $this->hubSections;
     }
 
     public function createHubIfNotExists(string $hub_id) {

@@ -12,8 +12,8 @@
     forceCoversAnnotation="false"
     mapTestClassNameToCoveredClassName="false"
     processIsolation="false"
-    stopOnError="false"
-    stopOnFailure="false"
+    stopOnError="true"
+    stopOnFailure="true"
     stopOnIncomplete="false"
     stopOnSkipped="false"
     stopOnRisky="false"
@@ -26,4 +26,9 @@
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist addUncoveredFilesFromWhitelist="true">
+            <directory>src</directory>
+        </whitelist>
+    </filter>
 </phpunit>
