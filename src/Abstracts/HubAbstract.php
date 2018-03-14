@@ -18,6 +18,7 @@ abstract class HubAbstract {
     }
 
     abstract public function setInt(int $timestamp, int $value);
+    abstract public function setDecimal(int $timestamp, float $value);
 
     /**
      *
