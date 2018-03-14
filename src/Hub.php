@@ -179,9 +179,9 @@ class Hub extends HubAbstract {
                 if ($delta_abs <= $short) {
                     $type = self::TYPE_FLOAT_SHORT;
                     $real_type = self::TYPE_INT_SHORT;
-                } elseif ($delta_abs <= $long) {
-                    $type = self::TYPE_FLOAT_LONG;
-                    $real_type = self::TYPE_INT_LONG;
+//                } elseif ($delta_abs <= $long) {
+//                    $type = self::TYPE_FLOAT_LONG;
+//                    $real_type = self::TYPE_INT_LONG;
                 } else {
                     $type = self::TYPE_FLOAT_LONGLONG;
                     $real_type = self::TYPE_INT_LONGLONG;
