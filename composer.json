@@ -2,7 +2,8 @@
     "name": "MartynasJanu/Tardis",
     "autoload": {
         "psr-4": {
-            "Tardis\\": "src/"
+            "Tardis\\": "src/",
+            "Tardis\\Tests\\": "tests/"
         }
     }
 }
