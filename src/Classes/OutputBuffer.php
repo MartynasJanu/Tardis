@@ -2,37 +2,9 @@
 
 namespace Tardis\Classes;
 
-class OutputBuffer {
-    const TYPE_NULL = 'x';
-    const TYPE_INT_SHORT = 's';
-    const TYPE_INT_LONG = 'l';
-    const TYPE_INT_LONGLONG = 'q';
-    const TYPE_FLOAT_SHORT = '1';
-    const TYPE_FLOAT_LONG = '2';
-    const TYPE_FLOAT_LONGLONG = '3';
-    const TYPE_ARRAY = '4';
+use Tardis\Abstracts\BufferAbstract;
 
-    const DECIMALS = 8;
-
-    const LENGTH_SHORT = 32767; // 2^15 - 1
-    const LENGTH_LONG = 2147483647; // 2^31 - 1
-    const LENGTH_LONGLONG = 9.223372E18; // 2^63 - 1
-
-    protected $typestring = '';
-    protected $data = '';
-
-    public function getTypeString(): string {
-        return $this->typestring;
-    }
-
-    public function getDataBuffer(): string {
-        return $this->data;
-    }
-
-    public function getFullBuffer(): string {
-        return $this->typestring.$this->data;
-    }
-
+class OutputBuffer extends BufferAbstract {
     public function add($value) {
         if (is_int($value)) {
             return $this->addInt($value);
@@ -63,11 +35,14 @@ class OutputBuffer {
         $this->data .= pack($type['real_type'], $value);
     }
 
+    /**
+     * Max. number of elements: 32767
+     * @param array $values
+     */
     public function addArray(array $values) {
         $count = count($values);
-        $count_type = $this->getIntType($count);
         $this->typestring .= self::TYPE_ARRAY;
-        $this->typestring .= pack($count_type, $count);
+        $this->typestring .= pack(self::TYPE_INT_SHORT, $count);
 
         foreach ($values as $value) {
             $this->add($value);
@@ -76,7 +51,6 @@ class OutputBuffer {
 
     public function addNull() {
         $this->typestring .= self::TYPE_NULL;
-        $this->data .= pack(self::TYPE_NULL);
     }
 
     protected function getIntType(int $abs_value): string {

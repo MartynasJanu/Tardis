@@ -87,7 +87,7 @@ class OutputBufferTest extends TestCase {
             [// #11
                 'value' => null,
                 'typestring' => OutputBuffer::TYPE_NULL,
-                'data' => pack(OutputBuffer::TYPE_NULL),
+                'data' => '',
             ],
             [// #12
                 'value' => [
@@ -124,8 +124,7 @@ class OutputBufferTest extends TestCase {
                     OutputBuffer::TYPE_NULL,
                 'data' => pack(OutputBuffer::TYPE_INT_LONG, 1.1 * pow(10, OutputBuffer::DECIMALS)).
                     pack(OutputBuffer::TYPE_INT_LONG, -2.2 * pow(10, OutputBuffer::DECIMALS)).
-                    pack(OutputBuffer::TYPE_INT_LONG, 3.3 * pow(10, OutputBuffer::DECIMALS)).
-                    pack(OutputBuffer::TYPE_NULL),
+                    pack(OutputBuffer::TYPE_INT_LONG, 3.3 * pow(10, OutputBuffer::DECIMALS)),
             ],
         ];
     }
