@@ -1,0 +1,109 @@
+<?php
+
+namespace Tardis\Classes;
+
+class OutputBuffer {
+    const TYPE_NULL = 'x';
+    const TYPE_INT_SHORT = 's';
+    const TYPE_INT_LONG = 'l';
+    const TYPE_INT_LONGLONG = 'q';
+    const TYPE_FLOAT_SHORT = '1';
+    const TYPE_FLOAT_LONG = '2';
+    const TYPE_FLOAT_LONGLONG = '3';
+    const TYPE_ARRAY = '4';
+
+    const DECIMALS = 8;
+
+    const LENGTH_SHORT = 32767; // 2^15 - 1
+    const LENGTH_LONG = 2147483647; // 2^31 - 1
+    const LENGTH_LONGLONG = 9.223372E18; // 2^63 - 1
+
+    protected $typestring = '';
+    protected $data = '';
+
+    public function getTypeString(): string {
+        return $this->typestring;
+    }
+
+    public function getDataBuffer(): string {
+        return $this->data;
+    }
+
+    public function getFullBuffer(): string {
+        return $this->typestring.$this->data;
+    }
+
+    public function add($value) {
+        if (is_int($value)) {
+            return $this->addInt($value);
+        } elseif (is_float($value)) {
+            return $this->addFloat($value);
+        } elseif (is_array($value)) {
+            return $this->addArray($value);
+        } elseif ($value === null) {
+            return $this->addNull();
+        } else {
+            var_dump($value);
+            die('OutputBuffer::add() Unsupported data type');
+        }
+    }
+
+    public function addInt(int $value) {
+        $abs = abs($value);
+        $type = $this->getIntType($abs);
+        $this->typestring .= $type;
+        $this->data .= pack($type, $value);
+    }
+
+    public function addFloat(float $value) {
+        $value = (int)($value * pow(10, self::DECIMALS));
+        $abs = abs($value);
+        $type = $this->getFloatType($abs);
+        $this->typestring .= $type['type'];
+        $this->data .= pack($type['real_type'], $value);
+    }
+
+    public function addArray(array $values) {
+        $count = count($values);
+        $count_type = $this->getIntType($count);
+        $this->typestring .= self::TYPE_ARRAY;
+        $this->typestring .= pack($count_type, $count);
+
+        foreach ($values as $value) {
+            $this->add($value);
+        }
+    }
+
+    public function addNull() {
+        $this->typestring .= self::TYPE_NULL;
+        $this->data .= pack(self::TYPE_NULL);
+    }
+
+    protected function getIntType(int $abs_value): string {
+        if ($abs_value <= self::LENGTH_SHORT) {
+            return self::TYPE_INT_SHORT;
+        } elseif ($abs_value <= self::LENGTH_LONG) {
+            return self::TYPE_INT_LONG;
+        } else {
+            return self::TYPE_INT_LONGLONG;
+        }
+    }
+
+    protected function getFloatType(float $abs_value): array {
+        if ($abs_value <= self::LENGTH_SHORT) {
+            $type = self::TYPE_FLOAT_SHORT;
+            $real_type = self::TYPE_INT_SHORT;
+        } elseif ($abs_value <= self::LENGTH_LONG) {
+            $type = self::TYPE_FLOAT_LONG;
+            $real_type = self::TYPE_INT_LONG;
+        } else {
+            $type = self::TYPE_FLOAT_LONGLONG;
+            $real_type = self::TYPE_INT_LONGLONG;
+        }
+
+        return [
+            'type' => $type,
+            'real_type' => $real_type,
+        ];
+    }
+}
