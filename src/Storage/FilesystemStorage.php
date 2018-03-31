@@ -21,7 +21,9 @@ class FilesystemStorage extends StorageAbstract {
     public function hubSectionExists(string $hub_id, string $hub_section_id): bool {
         $hub_dir = $this->getHubDirByHubId($hub_id);
         $hub_section_path = $hub_dir.'/'.$hub_section_id;
-        if (file_exists($hub_section_path)) {
+        $hub_section_path_gzipped = $hub_section_path.'.gzipped';
+
+        if (file_exists($hub_section_path) || file_exists($hub_section_path_gzipped)) {
             return true;
         } else {
             return false;
