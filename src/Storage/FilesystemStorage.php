@@ -2,6 +2,7 @@
 
 namespace Tardis\Storage;
 
+use Exception;
 use Tardis\Abstracts\StorageAbstract;
 
 class FilesystemStorage extends StorageAbstract {
@@ -96,6 +97,11 @@ class FilesystemStorage extends StorageAbstract {
                 sleep(1);
                 $gzipped_data = file_get_contents($hub_section_path_gzipped);
             }
+
+            if (empty($gzipped_data)) {
+                throw new Exception('Hub data at '.$hub_section_path_gzipped.' is empty');
+            }
+
             return gzuncompress($gzipped_data);
         } else {
             return file_get_contents($hub_section_path);
