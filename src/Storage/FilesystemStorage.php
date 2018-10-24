@@ -91,7 +91,12 @@ class FilesystemStorage extends StorageAbstract {
         $hub_section_path_gzipped = $hub_section_path.'.gzipped';
 
         if ($this->isGzipEnabled() && file_exists($hub_section_path_gzipped)) {
-            return gzuncompress(file_get_contents($hub_section_path_gzipped));
+            $gzipped_data = file_get_contents($hub_section_path_gzipped);
+            if (empty($gzipped_data)) {
+                sleep(1);
+                $gzipped_data = file_get_contents($hub_section_path_gzipped);
+            }
+            return gzuncompress($gzipped_data);
         } else {
             return file_get_contents($hub_section_path);
         }
