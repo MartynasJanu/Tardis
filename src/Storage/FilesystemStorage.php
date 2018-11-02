@@ -76,14 +76,29 @@ class FilesystemStorage extends StorageAbstract {
 
     public function writeHubSection(string $hub_id, string $hub_section_id, string $buffer) {
         $hub_dir = $this->getHubDirByHubId($hub_id);
-        $hub_section_path = $hub_dir.'/'.$hub_section_id;
-        $hub_section_path_gzipped = $hub_section_path.'.gzipped';
 
         if ($this->isGzipEnabled()) {
-            file_put_contents($hub_section_path_gzipped, gzcompress($buffer));
+            $hub_section_path = $hub_dir.'/'.$hub_section_id.'.gzipped';
+            $write_success = $this->filePutContentsSafe($hub_section_path, gzcompress($buffer));
         } else {
-            file_put_contents($hub_section_path, $buffer);
+            $hub_section_path = $hub_dir.'/'.$hub_section_id;
+            $write_success = $this->filePutContentsSafe($hub_section_path, $buffer);
         }
+
+        if (!$write_success) {
+            throw new Exception('Failed to write hub data at '.$hub_section_path);
+        }
+    }
+
+    public function filePutContentsSafe(string $filepath, string $data): bool {
+        $data_length = strlen($data);
+        $swap_filepath = $filepath.'_swap';
+        $bytes_written = file_put_contents($swap_filepath, $data);
+        if ($bytes_written === $data_length) {
+            return rename($swap_filepath, $filepath);
+        }
+
+        return false;
     }
 
     public function readHubSection(string $hub_id, string $hub_section_id): string {
