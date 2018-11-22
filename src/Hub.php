@@ -20,6 +20,10 @@ class Hub extends HubAbstract {
 
     const DECIMALS = 8;
 
+    /** @todo implement cache properly **/
+    public $useCache = false;
+    protected $groupedSectionCache = [];
+
     public function setInt(int $timestamp, int $value) {
         return $this->set($timestamp, $value, self::BASE_TYPE_INT);
     }
@@ -92,9 +96,17 @@ class Hub extends HubAbstract {
         int $to = null,
         bool $keep_nulls = false
     ): array {
-        $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
-        $data = $this->unpackBuffer($buffer);
-        $data = $this->groupDataByTime($data, (int)$section_id, $keep_nulls);
+        if (!isset($this->groupedSectionCache[$section_id])) {
+            $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
+            $sectionData = $this->unpackBuffer($buffer);
+            $this->groupedSectionCache[$section_id] = $this->groupDataByTime(
+                $sectionData,
+                (int)$section_id,
+                $keep_nulls
+            );
+        }
+
+        $data = $this->groupedSectionCache[$section_id];
 
         if (empty($from) && $to === null) {
             return $data;

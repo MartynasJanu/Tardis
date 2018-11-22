@@ -16,6 +16,8 @@ class Tardis {
 
     protected $hub = null;
 
+    protected $useCache = false;
+
     /**
      *
      * @var StorageInterface
@@ -37,6 +39,7 @@ class Tardis {
     public function getHub(): Hub {
         if ($this->hub === null) {
             $this->hub = new Hub($this->hub_id, $this->storage);
+            $this->hub->useCache = $this->useCache;
         }
 
         return $this->hub;
@@ -111,5 +114,13 @@ class Tardis {
         }
 
         $this->set_instructions = [];
+    }
+
+    public function getUseCache(): bool {
+        return $this->useCache;
+    }
+
+    public function setUseCache($useCache) {
+        $this->useCache = $useCache;
     }
 }
