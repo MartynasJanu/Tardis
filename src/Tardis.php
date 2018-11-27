@@ -2,6 +2,7 @@
 
 namespace Tardis;
 
+use Tardis\Interfaces\HubInterface;
 use Tardis\Interfaces\StorageInterface;
 use Tardis\Storage\FilesystemStorage;
 
@@ -36,7 +37,7 @@ class Tardis {
         $this->delayed_save = $delayed_save;
     }
 
-    public function getHub(): Hub {
+    public function getHub(): HubInterface {
         if ($this->hub === null) {
             $this->hub = new Hub($this->hub_id, $this->storage);
             $this->hub->useCache = $this->useCache;
