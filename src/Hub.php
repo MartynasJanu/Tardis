@@ -3,8 +3,9 @@
 namespace Tardis;
 
 use Tardis\Abstracts\HubAbstract;
+use Tardis\Interfaces\HubInterface;
 
-class Hub extends HubAbstract {
+class Hub extends HubAbstract implements HubInterface {
     const ROWS = 366 * 24 * 60;
 
     const TYPE_NULL = 'x';
