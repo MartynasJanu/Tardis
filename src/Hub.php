@@ -42,9 +42,9 @@ class Hub extends HubAbstract implements HubInterface {
         $timed_data = $this->getSectionData($section_id);
         /* @var $set_instruction SetInstruction */
         foreach ($set_instructions as $set_instruction) {
-            $rounded_timestamp = $this->roundTimestamp($set_instruction->timestamp);
+            $rounded_timestamp = (int)(floor($set_instruction->timestamp / 60) * 60);
 
-            if (!array_key_exists($rounded_timestamp, $timed_data)) {
+            if (!isset($timed_data[$rounded_timestamp])) {
                 die('Timed array is corrupted: '.$rounded_timestamp.' '.$section_id);
             }
 
