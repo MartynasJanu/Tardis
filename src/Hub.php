@@ -44,7 +44,7 @@ class Hub extends HubAbstract implements HubInterface {
         foreach ($set_instructions as $set_instruction) {
             $rounded_timestamp = (int)(floor($set_instruction->timestamp / 60) * 60);
 
-            if (!isset($timed_data[$rounded_timestamp])) {
+            if (!array_key_exists($rounded_timestamp, $timed_data)) {
                 die('Timed array is corrupted: '.$rounded_timestamp.' '.$section_id);
             }
 
