@@ -117,7 +117,12 @@ class FilesystemStorage extends StorageAbstract {
                 throw new Exception('Hub data at '.$hub_section_path_gzipped.' is empty');
             }
 
-            return gzuncompress($gzipped_data);
+            try {
+                return gzuncompress($gzipped_data);
+            } catch (ErrorException $error) {
+                file_put_contents($hub_section_path_gzipped.'.corrupt', $gzipped_data);
+                return '';
+            }
         } else {
             return file_get_contents($hub_section_path);
         }

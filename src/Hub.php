@@ -83,6 +83,11 @@ class Hub extends HubAbstract implements HubInterface {
 
     public function getSectionData(string $section_id): array {
         $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
+        if (empty($buffer)) {
+            $this->createBlankHubSection($section_id);
+            $buffer = $this->storage->readHubSection($this->hub_id, $section_id);
+        }
+
         $data = $this->unpackBuffer($buffer);
         return $this->groupDataByTime($data, (int)$section_id, true);
     }
