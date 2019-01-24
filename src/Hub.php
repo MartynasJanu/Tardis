@@ -42,6 +42,15 @@ class Hub extends HubAbstract implements HubInterface {
         $timed_data = $this->getSectionData($section_id);
         /* @var $set_instruction SetInstruction */
         foreach ($set_instructions as $set_instruction) {
+            if (is_array($set_instruction)) {
+                $set_instruction = new SetInstruction(
+                    $set_instruction['timestamp'],
+                    $set_instruction['value'],
+                    $set_instruction['type'],
+                    $set_instruction['section_id']
+                );
+            }
+
             $rounded_timestamp = (int)(floor($set_instruction->timestamp / 60) * 60);
 
             if (!array_key_exists($rounded_timestamp, $timed_data)) {

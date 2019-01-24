@@ -2,8 +2,10 @@
 
 namespace Tardis;
 
+use Tardis\Exceptions\RedisException;
 use Tardis\Interfaces\HubInterface;
 use Tardis\Interfaces\StorageInterface;
+use Tardis\Redis\Publisher as RedisPublisher;
 use Tardis\Storage\FilesystemStorage;
 
 class Tardis {
@@ -23,7 +25,7 @@ class Tardis {
      *
      * @var StorageInterface
      */
-    public $storage;
+    protected $storage;
 
     public function __construct(string $hub_id, bool $delayed_save = true, StorageInterface $storage = null) {
         if ($storage === null) {
@@ -104,7 +106,7 @@ class Tardis {
             }
             $this->set_instructions[$section_id][] = $set_instruction;
         } else {
-            $hub->setInt($timestamp, $value);
+            $hub->setDecimal($timestamp, $value);
         }
     }
 
@@ -115,6 +117,30 @@ class Tardis {
         }
 
         $this->set_instructions = [];
+    }
+
+    public function writeAsync(string $channel = null) {
+        $data = [
+            'hub_id' => $this->hub_id,
+            'storage_dir' => $this->storage->getStorageDir(),
+            'gzip_enabled' => $this->storage->isGzipEnabled(),
+            'instructions' => $this->set_instructions,
+        ];
+
+        try {
+            if ($channel === null) {
+                $channel = RedisPublisher::DEFAULT_CHANNEL;
+            }
+            RedisPublisher::publishArray($channel, $data);
+        } catch (RedisException $e) {
+            $this->write();
+        }
+
+        $this->set_instructions = [];
+    }
+
+    public function setInstructions(array $instructions) {
+        $this->set_instructions = $instructions;
     }
 
     public function getUseCache(): bool {
