@@ -53,24 +53,23 @@ class Subscriber extends RedisAbstract {
     }
 
     protected function writeData(string $payload) {
-        $data = json_decode($payload, true);
+        $data = json_decode($payload);
         if ($data !== null &&
-            isset($data['hub_id']) &&
-            isset($data['storage_dir']) &&
-            isset($data['gzip_enabled']) &&
-            isset($data['instructions'])
+            isset($data->hub_id) &&
+            isset($data->storage_dir) &&
+            isset($data->gzip_enabled) &&
+            isset($data->instructions)
         ) {
-            echo 'Data recieved, writing'.PHP_EOL;
+            echo 'Data received, writing'.PHP_EOL;
 
             $storage = new FilesystemStorage();
-            $storage->setStorageDir($data['storage_dir']);
-            if ($data['gzip_enabled'] === false) {
+            $storage->setStorageDir($data->storage_dir);
+            if ($data->gzip_enabled === false) {
                 $storage->disableGzip();
             }
 
-            $tardis = new Tardis($data['hub_id'], true, $storage);
-            $tardis->setInstructions($data['instructions']);
-
+            $tardis = new Tardis($data->hub_id, true, $storage);
+            $tardis->setInstructions((array)$data->instructions);
             $tardis->write();
         } else {
             throw new RedisException('Data in incorrect format: '.$payload);
