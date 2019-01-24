@@ -2,8 +2,8 @@
 
 namespace Tardis\Redis;
 
-use Tardis\Exceptions\RedisException;
 use Tardis\Abstracts\RedisAbstract;
+use Tardis\Exceptions\RedisException;
 
 class Publisher extends RedisAbstract {
     /**

@@ -4,8 +4,13 @@ namespace Tardis\Abstracts;
 
 use Tardis\Exceptions\RedisException;
 use Predis\Client as RedisClient;
+use Exception;
 
 abstract class RedisAbstract {
+    const DEFAULT_CHANNEL = 'tardis';
+    const CONTROL_CHANNEL = 'tardis_control';
+    const UNSUBSCRIBE_COMMAND = 'quit_loop';
+
     protected static $serverSettings = [
         'host' => '127.0.0.1',
         'port' => 6379,
