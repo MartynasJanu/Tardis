@@ -23,7 +23,7 @@ class Tardis {
      *
      * @var StorageInterface
      */
-    protected $storage;
+    public $storage;
 
     public function __construct(string $hub_id, bool $delayed_save = true, StorageInterface $storage = null) {
         if ($storage === null) {
@@ -123,5 +123,9 @@ class Tardis {
 
     public function setUseCache($useCache) {
         $this->useCache = $useCache;
+    }
+
+    public function getHubId(): string {
+        return $this->hub_id;
     }
 }

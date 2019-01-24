@@ -223,7 +223,7 @@ class Hub extends HubAbstract implements HubInterface {
     }
 
     protected function roundTimestamp(int $timestamp, int $step = 60): int {
-        return floor($timestamp / $step) * $step;
+        return (int)(floor($timestamp / $step) * $step);
     }
 
     protected function groupDataByTime(array $data, int $offset, bool $keep_nulls = false): array {
