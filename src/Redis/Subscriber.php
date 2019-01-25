@@ -12,13 +12,28 @@ use stdClass;
 class Subscriber extends RedisAbstract {
     protected $subscriberLoop = null;
 
-    public function __construct(array $channels) {
+    protected $channel;
+    protected $controlChannel;
+    protected $unsubscribeCommand;
+
+    public function __construct() {
+        $this->channel = Tardis::getRedisChannel();
+        $this->controlChannel = Tardis::getRedisControlChannel();
+        $this->unsubscribeCommand = Tardis::getRedisUnsubscribeCommand();
+
+        if (empty($this->channel) ||
+            empty($this->controlChannel) ||
+            empty($this->unsubscribeCommand)
+        ) {
+            throw new RedisException('Redis channels not set.');
+        }
+
         if (static::$redisClient === null) {
             static::initClient();
         }
 
         $this->subscriberLoop = static::$redisClient->pubSubLoop();
-        $this->subscriberLoop->subscribe(array_merge($channels, [self::CONTROL_CHANNEL]));
+        $this->subscriberLoop->subscribe($this->channel, $this->controlChannel);
 
         foreach ($this->subscriberLoop as $message) {
             $this->processMessage($message);
@@ -34,8 +49,8 @@ class Subscriber extends RedisAbstract {
                 echo "Subscribed to {$message->channel}".PHP_EOL;
                 break;
             case 'message':
-                if ($message->channel === self::CONTROL_CHANNEL) {
-                    if ($message->payload === self::UNSUBSCRIBE_COMMAND) {
+                if ($message->channel === $this->controlChannel) {
+                    if ($message->payload === $this->unsubscribeCommand) {
                         $this->subscriberLoop->unsubscribe();
                         return;
                     }
