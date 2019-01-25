@@ -21,6 +21,12 @@ class Tardis {
 
     protected $useCache = false;
 
+    protected static $redisHost = null;
+    protected static $redisPort = null;
+    protected static $redisChannel = null;
+    protected static $redisControlChannel = null;
+    protected static $redisUnsubscribeCommand = null;
+
     /**
      *
      * @var StorageInterface
@@ -119,7 +125,7 @@ class Tardis {
         $this->set_instructions = [];
     }
 
-    public function writeAsync(string $channel = null) {
+    public function writeAsync() {
         $data = [
             'hub_id' => $this->hub_id,
             'storage_dir' => $this->storage->getStorageDir(),
@@ -128,10 +134,11 @@ class Tardis {
         ];
 
         try {
-            if ($channel === null) {
-                $channel = RedisPublisher::DEFAULT_CHANNEL;
+            if (self::$redisChannel === null) {
+                throw new RedisException('Redis channels not set.');
             }
-            RedisPublisher::publishArray($channel, $data);
+
+            RedisPublisher::publishArray(self::$redisChannel, $data);
         } catch (RedisException $e) {
             $this->write();
         }
@@ -153,5 +160,46 @@ class Tardis {
 
     public function getHubId(): string {
         return $this->hub_id;
+    }
+
+    public static function setRedisServer(string $host, int $port) {
+        self::$redisHost = $host;
+        self::$redisPort = $port;
+    }
+
+    public static function getRedisServer(): array {
+        if (self::$redisHost === null ||
+            self::$redisPort === null
+        ) {
+            return [];
+        }
+
+        return [
+            'host' => self::$redisHost,
+            'port' => self::$redisPort,
+            'read_write_timeout' => 0,
+        ];
+    }
+
+    public static function setRedisChannels(
+        string $channel,
+        string $controlChannel,
+        string $unsubscribeCommand = 'unsubscribe'
+    ) {
+        self::$redisChannel = $channel;
+        self::$redisControlChannel = $controlChannel;
+        self::$redisUnsubscribeCommand = $unsubscribeCommand;
+    }
+
+    public static function getRedisChannel(): ?string {
+        return self::$redisChannel;
+    }
+
+    public static function getRedisControlChannel(): ?string {
+        return self::$redisControlChannel;
+    }
+
+    public static function getRedisUnsubscribeCommand(): ?string {
+        return self::$redisUnsubscribeCommand;
     }
 }

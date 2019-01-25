@@ -1,20 +1,24 @@
 <?php
 require_once './vendor/autoload.php';
 
-use Tardis\Redis\Subscriber as RedisSubscriber;
+use Tardis\Exceptions\RedisException;
 use Tardis\Exceptions\RedisUnsubscribedException;
+use Tardis\Redis\Subscriber as RedisSubscriber;
+use Tardis\Tardis;
 
 try {
-    if (count($argv) > 2) {
-        $settings = [
-            'host' => $argv[2],
-            'port' => $argv[3] ?? 6379,
-            'read_write_timeout' => 0,
-        ];
-        RedisSubscriber::setServerSettings($settings);
-    }
-    $channels = $argv[1] ?? RedisSubscriber::DEFAULT_CHANNEL;
-    new RedisSubscriber(explode(',', $channels));
+    $host = $argv[1] ?? '127.0.0.1';
+    $port = $argv[2] ?? 6379;
+    Tardis::setRedisServer($host, $port);
+
+    $channels = $argv[3] ?? 'tardis';
+    $controlChannel = $argv[4] ?? 'tardis_control';
+    $unsubscribeCommand = $argv[5] ?? 'unsubscribe';
+    Tardis::setRedisChannels($channels, $controlChannel, $unsubscribeCommand);
+
+    new RedisSubscriber();
+} catch (RedisException $e) {
+    echo $e->getMessage().PHP_EOL;
 } catch (RedisUnsubscribedException $e) {
     echo 'Unsubscribe command recieved. Geronimooooo!'.PHP_EOL;
 }
