@@ -2,10 +2,9 @@
 
 namespace Tardis\Abstracts;
 
+use Predis\Client as RedisClient;
 use Tardis\Exceptions\RedisException;
 use Tardis\Tardis;
-use Predis\Client as RedisClient;
-use Exception;
 
 abstract class RedisAbstract {
     protected static $redisClient = null;
@@ -20,10 +19,13 @@ abstract class RedisAbstract {
             throw new RedisException('Host and/or port missing in server settings');
         }
 
-        try {
-            static::$redisClient = new RedisClient($redisServer);
-        } catch (Exception $e) {
-            throw new RedisException('Redis connection failed');
-        }
+        static::$redisClient = new RedisClient($redisServer);
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    public static function resetClient() {
+        static::$redisClient = null;
     }
 }

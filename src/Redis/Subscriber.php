@@ -5,8 +5,8 @@ namespace Tardis\Redis;
 use Tardis\Abstracts\RedisAbstract;
 use Tardis\Exceptions\RedisUnsubscribedException;
 use Tardis\Exceptions\RedisException;
-use Tardis\Tardis;
 use Tardis\Storage\FileSystemStorage;
+use Tardis\Tardis;
 use stdClass;
 
 class Subscriber extends RedisAbstract {
@@ -75,7 +75,7 @@ class Subscriber extends RedisAbstract {
             isset($data->gzip_enabled) &&
             isset($data->instructions)
         ) {
-            echo 'Data received, writing'.PHP_EOL;
+            echo 'Data received, writing... ';
 
             $storage = new FilesystemStorage();
             $storage->setStorageDir($data->storage_dir);
@@ -86,6 +86,7 @@ class Subscriber extends RedisAbstract {
             $tardis = new Tardis($data->hub_id, true, $storage);
             $tardis->setInstructions((array)$data->instructions);
             $tardis->write();
+            echo 'Done!'.PHP_EOL;
         } else {
             throw new RedisException('Data in incorrect format: '.$payload);
         }
