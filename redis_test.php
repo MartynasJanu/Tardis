@@ -21,10 +21,15 @@ $start = microtime(true);
 $tardis->writeAsync();
 echo 'Async: '.number_format(microtime(true) - $start, 8).' s.'.PHP_EOL;
 
-$tardis = generateValues('write_test', 100000);
+// CHECK IF VALUES ARE WRITTEN
+
+echo 'Values count: '.count($tardis->getValues()).PHP_EOL;
+sleep(5);
+echo 'Values count: '.count($tardis->getValues()).PHP_EOL;
 
 // COMPARE WRITE TIME
 
+$tardis = generateValues('write_test', 100000);
 $start = microtime(true);
 $tardis->write();
 echo 'Direct: '.number_format(microtime(true) - $start, 8).' s.'.PHP_EOL;
