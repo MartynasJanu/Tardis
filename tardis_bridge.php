@@ -1,6 +1,7 @@
 <?php
 require_once './vendor/autoload.php';
 
+use Predis\Connection\ConnectionException;
 use Tardis\Exceptions\RedisException;
 use Tardis\Exceptions\RedisUnsubscribedException;
 use Tardis\Redis\Subscriber as RedisSubscriber;
@@ -18,6 +19,8 @@ try {
 
     new RedisSubscriber();
 } catch (RedisException $e) {
+    echo $e->getMessage().PHP_EOL;
+} catch (ConnectionException $e) {
     echo $e->getMessage().PHP_EOL;
 } catch (RedisUnsubscribedException $e) {
     echo 'Unsubscribe command recieved. Geronimooooo!'.PHP_EOL;

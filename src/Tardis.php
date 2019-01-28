@@ -2,6 +2,7 @@
 
 namespace Tardis;
 
+use Predis\Connection\ConnectionException;
 use Tardis\Exceptions\RedisException;
 use Tardis\Interfaces\HubInterface;
 use Tardis\Interfaces\StorageInterface;
@@ -134,11 +135,18 @@ class Tardis {
         ];
 
         try {
+            if (self::$redisHost === null ||
+                self::$redisPort === null
+            ) {
+                throw new RedisException('Redis server host and/or port not set.');
+            }
             if (self::$redisChannel === null) {
                 throw new RedisException('Redis channels not set.');
             }
 
             RedisPublisher::publishArray(self::$redisChannel, $data);
+        } catch (ConnectionException $e) {
+            $this->write();
         } catch (RedisException $e) {
             $this->write();
         }
@@ -201,5 +209,16 @@ class Tardis {
 
     public static function getRedisUnsubscribeCommand(): ?string {
         return self::$redisUnsubscribeCommand;
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    public static function resetRedis() {
+        self::$redisHost = null;
+        self::$redisPort = null;
+        self::$redisChannel = null;
+        self::$redisControlChannel = null;
+        self::$redisUnsubscribeCommand = null;
     }
 }
