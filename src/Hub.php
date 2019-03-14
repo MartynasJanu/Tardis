@@ -9,17 +9,21 @@ class Hub extends HubAbstract implements HubInterface {
     const ROWS = 366 * 24 * 60;
 
     const TYPE_NULL = 'x';
-    const TYPE_INT_SHORT = 's';
-    const TYPE_INT_LONG = 'l';
-    const TYPE_INT_LONGLONG = 'q';
-    const TYPE_FLOAT_SHORT = '1';
-    const TYPE_FLOAT_LONG = '2';
-    const TYPE_FLOAT_LONGLONG = '3';
+    const TYPE_INT = 'i';
+    const TYPE_FLOAT = 'f';
+    const TYPE_STRING = 's';
+    const TYPE_ARRAY = 'a';
 
     const BASE_TYPE_INT = 'int';
     const BASE_TYPE_DECIMAL = 'decimal';
+    const BASE_TYPE_ARRAY = 'array';
+    const BASE_TYPE_STRING = 'string';
 
     const DECIMALS = 8;
+    
+    static function antiEOL(): string {
+        return chr(2);
+    }
 
     /** @todo implement cache properly **/
     public $useCache = false;
@@ -31,6 +35,14 @@ class Hub extends HubAbstract implements HubInterface {
 
     public function setDecimal(int $timestamp, float $value) {
         return $this->set($timestamp, $value, self::BASE_TYPE_DECIMAL);
+    }
+
+    public function setString(int $timestamp, string $value) {
+        return $this->set($timestamp, $value, self::BASE_TYPE_STRING);
+    }
+
+    public function setArray(int $timestamp, array $value) {
+        return $this->set($timestamp, $value, self::BASE_TYPE_ARRAY);
     }
 
     public function setFromInstructions(string $section_id, array $set_instructions) {
@@ -52,6 +64,12 @@ class Hub extends HubAbstract implements HubInterface {
                 $timed_data[$rounded_timestamp] = (int)$set_instruction->value;
             } elseif ($set_instruction->type === self::BASE_TYPE_DECIMAL) {
                 $timed_data[$rounded_timestamp] = (float)$set_instruction->value;
+            } elseif ($set_instruction->type === self::BASE_TYPE_STRING) {
+                $timed_data[$rounded_timestamp] = (string)$set_instruction->value;
+            } elseif ($set_instruction->type === self::BASE_TYPE_ARRAY) {
+                $timed_data[$rounded_timestamp] = $set_instruction->value;
+            } else {
+                throw new Exception('Unknown data type');
             }
         }
 
@@ -76,6 +94,12 @@ class Hub extends HubAbstract implements HubInterface {
             $timed_data[$rounded_timestamp] = (int)$value;
         } elseif ($type === self::BASE_TYPE_DECIMAL) {
             $timed_data[$rounded_timestamp] = (float)$value;
+        } elseif ($type === self::BASE_TYPE_STRING) {
+            $timed_data[$rounded_timestamp] = (string)$value;
+        } elseif ($type === self::BASE_TYPE_ARRAY) {
+            $timed_data[$rounded_timestamp] = $value;
+        } else {
+            throw new Exception('Unknown data type');
         }
 
         $this->writeToSection($section_id, $timed_data);
@@ -166,62 +190,27 @@ class Hub extends HubAbstract implements HubInterface {
         return $actual_sections;
     }
 
-    /**
-     * @todo refactor!
-     */
     protected function writeToSection(string $section_id, array $data) {
-        $short = pow(2, 15) - 1;
-        $long = pow(2, 31) - 1;
-        $double = pow(2, 63) - 1;
-
         $typestring = '';
         $data_buffer = '';
 
-        $data = array_slice($data, 0, self::ROWS);
-        $last = 0;
-        foreach ($data as $item) {
+        foreach (array_slice($data, 0, self::ROWS) as $item) {
             if ($item === null) {
-                $typestring .= 'x';
-                $data_buffer .= pack(self::TYPE_NULL);
-                $last = 0;
+                $typestring .= self::TYPE_NULL;
                 continue;
-            }
-
-            $type = '';
-            $real_type = '';
-            if (is_float($item)) {
-                $item = (int)($item * pow(10, self::DECIMALS));
-                $delta = $item - $last;
-                $delta_abs = abs($delta);
-
-                if ($delta_abs <= $short) {
-                    $type = self::TYPE_FLOAT_SHORT;
-                    $real_type = self::TYPE_INT_SHORT;
-//                } elseif ($delta_abs <= $long) {
-//                    $type = self::TYPE_FLOAT_LONG;
-//                    $real_type = self::TYPE_INT_LONG;
-                } else {
-                    $type = self::TYPE_FLOAT_LONGLONG;
-                    $real_type = self::TYPE_INT_LONGLONG;
-                }
+            } elseif (is_float($item)) {
+                $typestring .= self::TYPE_FLOAT;
+            } elseif (is_int($item)) {
+                $typestring .= self::TYPE_INT;
+            } elseif (is_array($item)) {
+                $typestring .= self::TYPE_ARRAY;
+                $item = str_replace(PHP_EOL, self::antiEOL(), json_encode($item));
             } else {
-                $delta = $item - $last;
-                $delta_abs = abs($delta);
-
-                if ($delta_abs <= $short) {
-                    $type = self::TYPE_INT_SHORT;
-                } elseif ($delta_abs <= $long) {
-                    $type = self::TYPE_INT_LONG;
-                } else {
-                    $type = self::TYPE_INT_LONGLONG;
-                }
-
-                $real_type = $type;
+                $typestring .= self::TYPE_STRING;
+                $item = str_replace(PHP_EOL, self::antiEOL(), $item);
             }
 
-            $typestring .= $type;
-            $data_buffer .= pack($real_type, $delta);
-            $last = $item;
+            $data_buffer .= (string)$item.PHP_EOL;
         }
 
         $this->storage->writeHubSection($this->hub_id, $section_id, $typestring.$data_buffer);
@@ -255,47 +244,27 @@ class Hub extends HubAbstract implements HubInterface {
         $types = str_split($header);
 
         $offset = 0;
-        $last = 0;
+        $raw_items = explode(PHP_EOL, $raw_data);
         foreach ($types as $type) {
             if ($type === self::TYPE_NULL) {
-                $data[] = null;
-                $last = 0;
-                ++$offset;
-                continue;
-            } elseif ($type === self::TYPE_INT_SHORT) {
-                $data_item = unpack(self::TYPE_INT_SHORT, $raw_data, $offset);
-                $delta = $data_item[1];
-                $value = $last + $delta;
-                $last = $value;
-                $offset += 2;
-            } elseif ($type === self::TYPE_INT_LONG) {
-                $data_item = unpack(self::TYPE_INT_LONG, $raw_data, $offset);
-                $delta = $data_item[1];
-                $value = $last + $delta;
-                $last = $value;
-                $offset += 4;
-            } elseif ($type === self::TYPE_INT_LONGLONG) {
-                $data_item = unpack(self::TYPE_INT_LONGLONG, $raw_data, $offset);
-                $delta = $data_item[1];
-                $value = $last + $delta;
-                $last = $value;
-                $offset += 8;
+                $value = null;
 
-            } elseif ($type === self::TYPE_FLOAT_SHORT) {
-                $data_item = unpack(self::TYPE_INT_SHORT, $raw_data, $offset);
-                $value = (float)(($last + $data_item[1]) / pow(10, self::DECIMALS));
-                $last = (int)($value * pow(10, self::DECIMALS));
-                $offset += 2;
-            } elseif ($type === self::TYPE_FLOAT_LONG) {
-                $data_item = unpack(self::TYPE_INT_LONG, $raw_data, $offset);
-                $value = (float)(($last + $data_item[1]) / pow(10, self::DECIMALS));
-                $last = (int)($value * pow(10, self::DECIMALS));
-                $offset += 4;
-            } elseif ($type === self::TYPE_FLOAT_LONGLONG) {
-                $data_item = unpack(self::TYPE_INT_LONGLONG, $raw_data, $offset);
-                $value = (float)(($last + $data_item[1]) / pow(10, self::DECIMALS));
-                $last = (int)($value * pow(10, self::DECIMALS));
-                $offset += 8;
+            } elseif ($type === self::TYPE_INT) {
+                $value = (int)$raw_items[$offset];
+                ++$offset;
+
+            } elseif ($type === self::TYPE_FLOAT) {
+                $value = (float)$raw_items[$offset];
+                ++$offset;
+
+            } elseif ($type === self::TYPE_STRING) {
+                $value = str_replace(self::antiEOL(), PHP_EOL, (string)$raw_items[$offset]);
+                ++$offset;
+
+            } elseif ($type === self::TYPE_ARRAY) {
+                $value = str_replace(self::antiEOL(), PHP_EOL, (string)$raw_items[$offset]);
+                $value = json_decode($value, true);
+                ++$offset;
             }
 
             $data[] = $value;

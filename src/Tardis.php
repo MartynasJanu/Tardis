@@ -117,6 +117,42 @@ class Tardis {
         }
     }
 
+    public function setArray(int $timestamp, array $value) {
+        $hub = $this->getHub();
+        if ($this->delayed_save) {
+            $section_id = $hub->getHubSectionIdByTimestamp($timestamp);
+            $set_instruction = new SetInstruction();
+            $set_instruction->section_id = $section_id;
+            $set_instruction->timestamp = $timestamp;
+            $set_instruction->type = Hub::BASE_TYPE_ARRAY;
+            $set_instruction->value = $value;
+            if (!isset($this->set_instructions[$section_id])) {
+                $this->set_instructions[$section_id] = [];
+            }
+            $this->set_instructions[$section_id][] = $set_instruction;
+        } else {
+            $hub->setArray($timestamp, $value);
+        }
+    }
+
+    public function setString(int $timestamp, string $value) {
+        $hub = $this->getHub();
+        if ($this->delayed_save) {
+            $section_id = $hub->getHubSectionIdByTimestamp($timestamp);
+            $set_instruction = new SetInstruction();
+            $set_instruction->section_id = $section_id;
+            $set_instruction->timestamp = $timestamp;
+            $set_instruction->type = Hub::BASE_TYPE_STRING;
+            $set_instruction->value = $value;
+            if (!isset($this->set_instructions[$section_id])) {
+                $this->set_instructions[$section_id] = [];
+            }
+            $this->set_instructions[$section_id][] = $set_instruction;
+        } else {
+            $hub->setString($timestamp, $value);
+        }
+    }
+
     public function write() {
         $hub = $this->getHub();
         foreach ($this->set_instructions as $section_id => $instructions) {
