@@ -81,6 +81,14 @@ class Hub extends HubAbstract implements HubInterface {
         $this->writeToSection($section_id, $timed_data);
     }
 
+    public function recreate() {
+        $sections = $this->getSections();
+        foreach ($sections as $section_id) {
+            $data = $this->getSectionData($section_id);
+            $this->writeToSection($section_id, $data);
+        }
+    }
+
     protected function set(int $timestamp, $value, string $type) {
         $section_id = $this->getHubSectionIdByTimestamp($timestamp);
         $this->storage->createHubIfNotExists($this->hub_id);
