@@ -4,6 +4,7 @@ namespace Tardis;
 
 use Tardis\Abstracts\HubAbstract;
 use Tardis\Interfaces\HubInterface;
+use Tardis\Helpers\LegacyHelper;
 
 class Hub extends HubAbstract implements HubInterface {
     const ROWS = 366 * 24 * 60;
@@ -20,9 +21,13 @@ class Hub extends HubAbstract implements HubInterface {
     const BASE_TYPE_STRING = 'string';
 
     const DECIMALS = 8;
-    
+
     static function antiEOL(): string {
         return chr(2);
+    }
+
+    static function nonPackedFileIndicator(): string {
+        return chr(14);
     }
 
     /** @todo implement cache properly **/
@@ -191,7 +196,7 @@ class Hub extends HubAbstract implements HubInterface {
     }
 
     protected function writeToSection(string $section_id, array $data) {
-        $typestring = '';
+        $typestring = self::nonPackedFileIndicator();
         $data_buffer = '';
 
         foreach (array_slice($data, 0, self::ROWS) as $item) {
@@ -238,8 +243,12 @@ class Hub extends HubAbstract implements HubInterface {
      * @todo refactor!
      */
     protected function unpackBuffer(string $buffer): array {
-        $header = mb_substr($buffer, 0, self::ROWS);
-        $raw_data = mb_substr($buffer, self::ROWS);
+        if (mb_substr($buffer, 0, 1) !== self::nonPackedFileIndicator()) {
+            return LegacyHelper::unpackBuffer($buffer);
+        }
+
+        $header = mb_substr($buffer, 1, self::ROWS);
+        $raw_data = mb_substr($buffer, self::ROWS + 1);
         $data = [];
         $types = str_split($header);
 
@@ -274,10 +283,7 @@ class Hub extends HubAbstract implements HubInterface {
     }
 
     protected function createBlankHubSection(string $section_id) {
-        $buffer = str_repeat(self::TYPE_NULL, self::ROWS);
-        for ($i = 0; $i < self::ROWS; ++$i) {
-            $buffer .= pack(self::TYPE_NULL);
-        }
+        $buffer = self::nonPackedFileIndicator().str_repeat(self::TYPE_NULL, self::ROWS);
 
         $this->storage->writeHubSection($this->hub_id, $section_id, $buffer);
     }
